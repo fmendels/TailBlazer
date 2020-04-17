@@ -29,6 +29,8 @@ namespace TailBlazer.Views.Tail
         public long Start { get; }
         public int Index { get; }
         public LineKey Key { get; }
+        public Color CurrentColor { get; } 
+        private bool CurrentThemeLight;
 
         public IProperty<IEnumerable<DisplayText>> FormattedText { get; }
         public IProperty<string> PlainText { get; }
@@ -55,6 +57,26 @@ namespace TailBlazer.Views.Tail
             Index = line.LineInfo.Index;
             Line = line;
             Key = Line.Key;
+
+            IsThemeLight(themeProvider);
+
+            CurrentColor = CurrentThemeLight ? Colors.Black: Colors.White;
+
+            if (line.Text != null)
+            {
+                if (line.Text.Contains("[INFO"))
+                    CurrentColor = CurrentThemeLight ? Colors.Blue: Colors.LightBlue;
+
+                if (line.Text.Contains("[ERROR"))
+                    CurrentColor = Colors.Red;
+
+                if (line.Text.Contains("[WARN"))
+                    CurrentColor = Colors.OrangeRed;
+
+                if (line.Text.Contains("[DEBUG"))
+                    CurrentColor = Colors.Green;
+            }
+
          
             var lineMatchesShared = lineMatches.Publish();
             var textScrollShared = textScroll.Publish();
@@ -179,6 +201,12 @@ namespace TailBlazer.Views.Tail
         public override string ToString()
         {
             return $"{Line}";
+        } 
+        
+        private async void IsThemeLight(IThemeProvider themeProvider)
+        {
+            var currentTheme = await themeProvider.Theme.FirstAsync();//First();
+            CurrentThemeLight = currentTheme.Equals(TailBlazer.Domain.Formatting.Theme.Light);
         }
     }
 }
